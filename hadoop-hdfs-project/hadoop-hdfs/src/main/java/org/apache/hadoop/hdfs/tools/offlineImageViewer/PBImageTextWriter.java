@@ -509,7 +509,7 @@ abstract class PBImageTextWriter implements Closeable {
    * @param tempPath the path to store metadata. If it is empty, store metadata
    *                 in memory instead.
    */
-  PBImageTextWriter(PrintStream out, String delimiter, String tempPath, 
+  PBImageTextWriter(PrintStream out, String delimiter, String tempPath,
       int numThreads, String parallelOut) throws IOException {
     this.out = out;
     this.delimiter = delimiter;
@@ -659,7 +659,7 @@ abstract class PBImageTextWriter implements Closeable {
       throws IOException {
     ArrayList<FileSummary.Section> allINodeSubSections =
         getINodeSubSections(sections);
-    if (numThreads > 1 && !parallelOut.equals("-") && 
+    if (numThreads > 1 && !parallelOut.equals("-") &&
         allINodeSubSections.size() > 1) {
       outputInParallel(conf, summary, allINodeSubSections);
     } else {
@@ -698,7 +698,7 @@ abstract class PBImageTextWriter implements Closeable {
    * | (0    1    2)    (3    4    5)    (6    7)     (8    9)       |
    * | thread[0]        thread[1]        thread[2]    thread[3]      |
    * |---------------------------------------------------------------|
-   * 
+   *
    * STEP2: Merge files.
    */
   private void outputInParallel(Configuration conf, FileSummary summary,
@@ -742,9 +742,9 @@ abstract class PBImageTextWriter implements Closeable {
                 // The first iNode section has a header which must be
                 // processed first
                 INodeSection s = INodeSection.parseDelimitedFrom(is);
-                expectedINodes.set(s.getNumInodes()); 
+                expectedINodes.set(s.getNumInodes());
              }
-             totalParsed.addAndGet(outputINodes(is, theOut)); 
+             totalParsed.addAndGet(outputINodes(is, theOut));
           }
           long timeTaken = Time.monotonicNow() - startTime;
           LOG.info("Time to output iNodes of sub-sections: [{},{}) {} ms",

@@ -807,8 +807,8 @@ public class TestOfflineImageViewer {
   @Test
   public void testParallelPBDelimitedWriter() throws Exception {
     testParallelPBDelimitedWriter("");  // Test in memory db.
-//    testParallelPBDelimitedWriter(new FileSystemTestHelper().getTestRootDir()
-//        + "/parallel-delimited.db");
+    testParallelPBDelimitedWriter(new FileSystemTestHelper().getTestRootDir()
+        + "/parallel-delimited.db");
   }
 
   @Test
