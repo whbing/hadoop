@@ -33,6 +33,8 @@ import static org.apache.hadoop.fs.permission.FsAction.READ_EXECUTE;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.hdfs.protocol.AddErasureCodingPolicyResponse;
 import org.apache.hadoop.hdfs.protocol.ErasureCodingPolicyState;
+
+import static org.apache.hadoop.hdfs.MiniDFSCluster.HDFS_MINIDFS_BASEDIR;
 import static org.apache.hadoop.hdfs.server.namenode.AclTestHelpers.aclEntry;
 import static org.apache.hadoop.hdfs.tools.offlineImageViewer.PBImageXmlWriter.ERASURE_CODING_SECTION_NAME;
 import static org.apache.hadoop.hdfs.tools.offlineImageViewer.PBImageXmlWriter.ERASURE_CODING_SECTION_POLICY;
@@ -92,8 +94,6 @@ import javax.xml.transform.stream.StreamResult;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.output.NullOutputStream;
-import org.junit.FixMethodOrder;
-import org.junit.runners.MethodSorters;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -144,7 +144,6 @@ import org.apache.hadoop.thirdparty.com.google.common.collect.Lists;
 import org.apache.hadoop.thirdparty.com.google.common.collect.Maps;
 import org.apache.hadoop.thirdparty.protobuf.ByteString;
 
-@FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class TestOfflineImageViewer {
   private static final Logger LOG =
       LoggerFactory.getLogger(OfflineImageViewerPB.class);
@@ -955,7 +954,9 @@ public class TestOfflineImageViewer {
     MD5Hash parallelMd5 = MD5FileUtils.computeMd5ForFile(parallelDelimitedOut);
 
     File serialDelimitedOut = new File(tempDir, "serialDelimitedOut");
-    if (db != "") db = db + "/../serial.db";
+    if (db != "") {
+      db = db + "/../serial.db";
+    }
     if (OfflineImageViewerPB.run(new String[] {"-p", "Delimited",
         "-i", originalFsimage.getAbsolutePath(),
         "-o", serialDelimitedOut.getAbsolutePath(),
@@ -1222,15 +1223,13 @@ public class TestOfflineImageViewer {
     }
   }
 
-  /**
-   * Calling 'new MiniDFSCluster.Builder(conf).xxx.build()' will clear global
-   * file 'originalFsimage', so the test that calls the file 'originalFsimage'
-   * must be executed before this test.
-   */
   @Test
-  public void testZFileDistributionCalculatorForException() throws Exception {
+  public void testFileDistributionCalculatorForException() throws Exception {
     File fsimageFile = null;
     Configuration conf = new Configuration();
+    // Avoid using the same cluster dir to cause the global originalFsimage
+    // file to be cleared.
+    conf.set(HDFS_MINIDFS_BASEDIR, GenericTestUtils.getRandomizedTempPath());
     HashMap<String, FileStatus> files = Maps.newHashMap();
 
     // Create a initial fsimage file

@@ -496,7 +496,7 @@ abstract class PBImageTextWriter implements Closeable {
   }
 
   private SerialNumberManager.StringTable stringTable;
-  protected PrintStream out;
+  protected final PrintStream out;
   private MetadataMap metadataMap = null;
   private String delimiter;
   private File filename;
@@ -691,8 +691,8 @@ abstract class PBImageTextWriter implements Closeable {
   }
 
   /**
-   * STEP1: Multi-threaded process sub-sections
-   * Given n (1<n<=k) threads to process k sections,
+   * STEP1: Multi-threaded process sub-sections.
+   * Given n (n>1) threads to process k (k>=n) sections,
    * E.g. 10 sections and 4 threads, grouped as follows:
    * |---------------------------------------------------------------|
    * | (0    1    2)    (3    4    5)    (6    7)     (8    9)       |
@@ -736,15 +736,15 @@ abstract class PBImageTextWriter implements Closeable {
         InputStream is = null;
         try (PrintStream theOut = new PrintStream(path, "UTF-8")) {
           long startTime = Time.monotonicNow();
-          for (int j = 0; j < subList.size(); j++) {
-             is = getInputStreamForSection(subList.get(j), codec, conf);
-             if (start == 0 && j == 0) {
-                // The first iNode section has a header which must be
-                // processed first
-                INodeSection s = INodeSection.parseDelimitedFrom(is);
-                expectedINodes.set(s.getNumInodes());
-             }
-             totalParsed.addAndGet(outputINodes(is, theOut));
+          for (int j = 0; j < subList.size(); j++) { 
+            is = getInputStreamForSection(subList.get(j), codec, conf);
+            if (start == 0 && j == 0) {
+              // The first iNode section has a header which must be
+              // processed first
+              INodeSection s = INodeSection.parseDelimitedFrom(is);
+              expectedINodes.set(s.getNumInodes()); 
+            }
+            totalParsed.addAndGet(outputINodes(is, theOut));
           }
           long timeTaken = Time.monotonicNow() - startTime;
           LOG.info("Time to output iNodes of sub-sections: [{},{}) {} ms",
@@ -906,7 +906,8 @@ abstract class PBImageTextWriter implements Closeable {
     }
   }
 
-  private int outputINodes(InputStream in, PrintStream out) throws IOException {
+  private int outputINodes(InputStream in, PrintStream outStream)
+      throws IOException {
     long ignored = 0;
     long ignoredSnapshots = 0;
     // As the input stream is a LimitInputStream, the reading will stop when
@@ -919,7 +920,7 @@ abstract class PBImageTextWriter implements Closeable {
       }
       try {
         String parentPath = metadataMap.getParentPath(p.getId());
-        printIfNotEmpty(out, getEntry(parentPath, p));
+        printIfNotEmpty(outStream, getEntry(parentPath, p));
       } catch (IOException ioe) {
         ignored++;
         if (!(ioe instanceof IgnoreSnapshotException)) {
@@ -1025,14 +1026,14 @@ abstract class PBImageTextWriter implements Closeable {
     File resultFile = new File(resultPath);
     try (FileChannel resultChannel =
              new FileOutputStream(resultFile, true).getChannel()) {
-      for (int i = 0; i < files.length; i ++) {
+      for (int i = 0; i < files.length; i++) {
         try (FileChannel src = new FileInputStream(files[i]).getChannel()) {
           resultChannel.transferFrom(src, resultChannel.size(), src.size());
         }
       }
     }
 
-    for (int i = 0; i < files.length; i ++) {
+    for (int i = 0; i < files.length; i++) {
       files[i].delete();
     }
   }
