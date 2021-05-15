@@ -736,13 +736,13 @@ abstract class PBImageTextWriter implements Closeable {
         InputStream is = null;
         try (PrintStream theOut = new PrintStream(path, "UTF-8")) {
           long startTime = Time.monotonicNow();
-          for (int j = 0; j < subList.size(); j++) { 
+          for (int j = 0; j < subList.size(); j++) {
             is = getInputStreamForSection(subList.get(j), codec, conf);
             if (start == 0 && j == 0) {
               // The first iNode section has a header which must be
               // processed first
               INodeSection s = INodeSection.parseDelimitedFrom(is);
-              expectedINodes.set(s.getNumInodes()); 
+              expectedINodes.set(s.getNumInodes());
             }
             totalParsed.addAndGet(outputINodes(is, theOut));
           }
@@ -785,7 +785,7 @@ abstract class PBImageTextWriter implements Closeable {
     LOG.info("Completed outputting all INode sub-sections to {} tmp files.",
         paths.length);
 
-    try (PrintStream pout = new PrintStream(parallelOut)) {
+    try (PrintStream pout = new PrintStream(parallelOut, "UTF-8")) {
       pout.println(getHeader());
     }
 
@@ -793,7 +793,7 @@ abstract class PBImageTextWriter implements Closeable {
     long startTime = Time.monotonicNow();
     mergeFiles(paths, parallelOut);
     long timeTaken = Time.monotonicNow() - startTime;
-    LOG.info("Time to merge files: {}ms", timeTaken);
+    LOG.info("Completed all stages. Time to merge files: {}ms", timeTaken);
   }
 
   protected PermissionStatus getPermission(long perm) {
@@ -1026,15 +1026,17 @@ abstract class PBImageTextWriter implements Closeable {
     File resultFile = new File(resultPath);
     try (FileChannel resultChannel =
              new FileOutputStream(resultFile, true).getChannel()) {
-      for (int i = 0; i < files.length; i++) {
-        try (FileChannel src = new FileInputStream(files[i]).getChannel()) {
+      for (File file : files) {
+        try (FileChannel src = new FileInputStream(file).getChannel()) {
           resultChannel.transferFrom(src, resultChannel.size(), src.size());
         }
       }
     }
 
-    for (int i = 0; i < files.length; i++) {
-      files[i].delete();
+    for (File file : files) {
+      if (!file.delete() && file.exists()) {
+        LOG.warn("delete tmp file: {} returned false", file);
+      }
     }
   }
 }
